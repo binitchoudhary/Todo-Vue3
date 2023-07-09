@@ -1,5 +1,6 @@
 <script setup>
 import {ref, onMounted, computed, watch } from 'vue'
+import { performExportToExcel } from './utils/excelExport.js'
 
 
 const todos = ref([])
@@ -12,32 +13,60 @@ const todos_asc = computed(()=>todos.value.sort((a,b)=> {
   return b.createdAt - a.createdAt
 }))
 
-const addTodo = ()=> {
-  if(input_content.value.trim()=== '' || input_category.value === null){
-    return
+const addTodo = () => {
+  if (input_content.value.trim() === '' || input_category.value === null) {
+    return;
   }
-  todos.value.push({
-    content: input_content.value,
-    category: input_category.value,
-    done:false,
-    createdAt: new Date().getTime()
-  })
 
-  input_content.value=''
-  input_category.value = null
-}
+  Swal.fire({
+    title: 'Are you sure?',
+    text: 'You are about to add a new task.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Add',
+    cancelButtonText: 'Cancel',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      todos.value.push({
+        content: input_content.value,
+        category: input_category.value,
+        done: false,
+        createdAt: new Date().getTime(),
+      });
+
+      input_content.value = '';
+      input_category.value = null;
+
+      Swal.fire('Added!', 'The task has been added.', 'success');
+    }
+  });
+};
+
 
 // const removeTodo = todo =>{
 //   todos.value = todos.value.filter(t => t !== todo)
 // }
 const removeTodo = (todo) => {
-  const index = todos.value.indexOf(todo);
-  console.log(index)
-  if (index !== -1) {
-    todos.value.splice(index, 1);
-  }
+  Swal.fire({
+    title: 'Are you sure?',
+    text: 'You are about to delete this task.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Delete',
+    cancelButtonText: 'Cancel',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      const index = todos.value.indexOf(todo);
+      if (index !== -1) {
+        todos.value.splice(index, 1);
+      }
+      Swal.fire('Deleted!', 'The task has been deleted.', 'success');
+    }
+  });
 };
-
+const exportToExcelData = () => {
+      performExportToExcel(todos.value)
+    }
 watch(todos, newVal=>{
   localStorage.setItem('todos', JSON.stringify(newVal))
 }, {deep: true})
@@ -105,7 +134,9 @@ onMounted(()=>{
   </div>
   </div>
 </section>
-
+<section class="export-section">
+      <button class="export-btn" @click="exportToExcelData">Export to Excel</button>
+    </section>
 </main>
 
 </template>
